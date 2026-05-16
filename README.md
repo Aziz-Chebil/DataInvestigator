@@ -84,9 +84,9 @@ Expected failure categories (to be filled with real data at Checkpoint 3):
 # 1. Install dependencies (Python 3.10+)
 pip install -r requirements.txt
 
-# 2. Add your Anthropic API key (needed from Week 2 onward)
+# 2. Add your API key (needed from Week 2 onward)
 cp .env.example .env
-# edit .env and set ANTHROPIC_API_KEY
+# edit .env and set API_KEY
 
 # 3. Download eval datasets
 python eval/download_datasets.py
