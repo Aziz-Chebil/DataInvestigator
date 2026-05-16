@@ -1,0 +1,23 @@
+# Environment
+.env
+
+# Generated output (ephemeral — recreated each run)
+output/*
+!output/.gitkeep
+
+# Eval datasets (download via: python eval/download_datasets.py)
+eval/datasets/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.venv
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/

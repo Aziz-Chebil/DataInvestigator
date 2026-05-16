@@ -1,0 +1,47 @@
+[
+  {
+    "id": "tips_01",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "What is the average tip amount across all transactions?",
+    "expected_answer": "2.9983",
+    "kind": "numeric",
+    "tolerance": 0.01,
+    "notes": "tips['tip'].mean() — seaborn tips dataset, 244 rows"
+  },
+  {
+    "id": "tips_02",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "Which day of the week has the highest average tip amount?",
+    "expected_answer": "Sun",
+    "kind": "string",
+    "tolerance": null,
+    "notes": "tips.groupby('day')['tip'].mean().idxmax() — seaborn uses 3-letter abbrevs (Sun/Sat/Thur/Fri)"
+  },
+  {
+    "id": "tips_03",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "What percentage of dining parties included smokers?",
+    "expected_answer": "38.1",
+    "kind": "numeric",
+    "tolerance": 0.5,
+    "notes": "93 smokers / 244 total * 100 = 38.11%"
+  },
+  {
+    "id": "tips_04_retry",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "What is the correlation between total bill and tip amount?",
+    "expected_answer": "0.6757",
+    "kind": "numeric",
+    "tolerance": 0.01,
+    "notes": "PLANTED ERROR case — attempt 1 uses wrong column name 'tip_amount', attempt 2 fixes it to 'tip'"
+  },
+  {
+    "id": "titanic_01",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "How many passengers survived?",
+    "expected_answer": "342",
+    "kind": "numeric",
+    "tolerance": 0,
+    "notes": "df['Survived'].sum() — Kaggle Titanic training set, 891 rows, 342 survived"
+  }
+]
