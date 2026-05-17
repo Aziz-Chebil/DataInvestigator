@@ -15,6 +15,9 @@ DATASETS = {
     "titanic.csv": (
         "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
     ),
+    "iris.csv": (
+        "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv"
+    ),
 }
 
 OUT_DIR = Path(__file__).parent / "datasets"

@@ -5,7 +5,10 @@ _MAX_UNIQUE_SHOW = 20  # show all values for categoricals with <= this many dist
 
 
 def profile_csv(path: str | Path) -> str:
-    df = pd.read_csv(path)
+    try:
+        df = pd.read_csv(path)
+    except UnicodeDecodeError:
+        df = pd.read_csv(path, encoding="latin1")
     lines: list[str] = []
 
     lines.append(f"=== CSV PROFILE: {Path(path).name} ===")

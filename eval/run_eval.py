@@ -1,17 +1,13 @@
 """
-Week 1 eval harness — uses hardcoded Python code strings instead of the LLM.
+Eval harness.
 
-Proves:
-  - subprocess execution and stdout/stderr capture
-  - outcome classification (clean_success / exception / timeout / ran_but_no_answer)
-  - retry loop: planted error in tips_04_retry recovers on attempt 2
-  - chart file detection (tips_02 saves a chart)
-
-Run from the project root:
-    python eval/run_eval.py
+  python eval/run_eval.py            # Week 1: hardcoded code strings (no API calls)
+  python eval/run_eval.py --llm      # Week 2+: real OpenAI codegen
 """
 
+import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -21,16 +17,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from agent.executor import execute_with_retry
 from agent.profiler import profile_csv
-from agent.types import OutcomeKind, RunResult
+from agent.types import OutcomeKind
 
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 CHART_PATH = str(OUTPUT_DIR / "chart.png")
 CASES_FILE = Path(__file__).parent / "cases.json"
 
 # ---------------------------------------------------------------------------
-# Hardcoded code templates — one list per case, index = attempt number.
-# Format placeholders: {csv} = csv path (repr-quoted), {chart} = chart path.
-# Any braces inside the generated Python code must be doubled {{ }}.
+# Hardcoded code templates (Week 1 mode).
+# Format placeholders: {csv} = csv path, {chart} = chart path.
+# Python f-string braces inside the generated code must be doubled: {{ }}.
 # ---------------------------------------------------------------------------
 _CODES: dict[str, list[str]] = {
     "tips_01": [
@@ -72,8 +68,7 @@ print(f'{{pct:.1f}}% of dining parties included smokers')
 """,
     ],
 
-    # Planted error case: attempt 1 uses wrong column name 'tip_amount' -> KeyError.
-    # attempt 2 uses the correct name 'tip'.
+    # Planted error: attempt 1 uses wrong column name -> KeyError; attempt 2 fixes it.
     "tips_04_retry": [
         """\
 import pandas as pd
@@ -103,7 +98,7 @@ print(f'{{n}} passengers survived')
 }
 
 
-def _make_codegen(case_id: str, csv_path: str, chart_path: str):
+def _make_hardcoded_codegen(case_id: str, csv_path: str, chart_path: str):
     codes = _CODES[case_id]
     attempt_idx = 0
 
@@ -124,7 +119,6 @@ def _check_answer(answer: Optional[str], case: dict) -> bool:
     tolerance = case.get("tolerance")
 
     if kind == "numeric":
-        # Extract all numbers from the answer and accept if any is within tolerance
         nums = re.findall(r"-?\d+\.?\d*", answer.replace(",", ""))
         tol = float(tolerance) if tolerance is not None else 0.01
         for num_str in nums:
@@ -141,7 +135,7 @@ def _check_answer(answer: Optional[str], case: dict) -> bool:
     return False
 
 
-def _print_table(rows: list[dict]) -> None:
+def _print_table(rows: list[dict], mode: str) -> None:
     col_w = [20, 22, 10, 8, 6]
     header = (
         f"{'ID':<{col_w[0]}}"
@@ -152,7 +146,7 @@ def _print_table(rows: list[dict]) -> None:
     )
     sep = "-" * sum(col_w)
     print("\n" + "=" * sum(col_w))
-    print("EVAL RESULTS - Week 1 (hardcoded harness)")
+    print(f"EVAL RESULTS - {mode}")
     print("=" * sum(col_w))
     print(header)
     print(sep)
@@ -170,6 +164,22 @@ def _print_table(rows: list[dict]) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--llm",
+        action="store_true",
+        help="Use real OpenAI codegen instead of hardcoded strings",
+    )
+    args = parser.parse_args()
+
+    if args.llm:
+        from agent._env import load_dotenv
+        load_dotenv()
+        if not os.environ.get("OPENAI_API_KEY"):
+            print("Error: OPENAI_API_KEY not set. Add it to your .env file.")
+            sys.exit(1)
+        from agent.codegen import make_codegen_fn
+
     OUTPUT_DIR.mkdir(exist_ok=True)
     cases: list[dict] = json.loads(CASES_FILE.read_text())
     rows: list[dict] = []
@@ -183,22 +193,27 @@ def main() -> None:
         print(f"Q:    {case['question']}")
         print(f"{'='*60}")
 
-        # Always profile first — profile goes into codegen context in Week 2
         profile = profile_csv(csv_path)
-        # Print a compact excerpt so the terminal stays readable
         profile_lines = profile.splitlines()
         print("\n".join(profile_lines[:6]) + "\n  ...")
 
-        codegen_fn = _make_codegen(case_id, csv_path, CHART_PATH)
+        if args.llm:
+            codegen_fn = make_codegen_fn(
+                case["question"], profile, csv_path, CHART_PATH
+            )
+        else:
+            codegen_fn = _make_hardcoded_codegen(case_id, csv_path, CHART_PATH)
+
         final, history = execute_with_retry(codegen_fn, CHART_PATH)
 
         for r in history:
             status = "OK" if r.outcome == OutcomeKind.CLEAN_SUCCESS else "FAIL"
-            print(f"  attempt {r.attempt}: [{status}] {r.outcome}")
+            print(f"  attempt {r.attempt}: [{status}] {r.outcome.value}")
             if r.outcome != OutcomeKind.CLEAN_SUCCESS and r.stderr:
-                # Print only the last line of stderr (usually the exception type)
                 last_err = r.stderr.strip().splitlines()[-1]
                 print(f"    -> {last_err}")
+            if args.llm and r.outcome != OutcomeKind.CLEAN_SUCCESS:
+                print(f"  --- code that failed ---\n{r.code}\n  ---")
 
         if final.answer:
             print(f"  answer: {final.answer}")
@@ -213,7 +228,8 @@ def main() -> None:
             }
         )
 
-    _print_table(rows)
+    mode_label = "LLM (OpenAI)" if args.llm else "hardcoded"
+    _print_table(rows, mode_label)
 
 
 if __name__ == "__main__":

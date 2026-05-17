@@ -1,0 +1,202 @@
+[
+  {
+    "id": "adv_sales_01",
+    "dataset": "eval/datasets/adversarial_sales.csv",
+    "question": "What is the total revenue from completed transactions only?",
+    "expected_answer": "299094",
+    "kind": "numeric",
+    "tolerance": 500,
+    "trap": "currency_format + boolean_normalization",
+    "notes": "amount is '$1,234.56' string; completed has True/yes/1/Y and False/no/0/N; must parse both"
+  },
+  {
+    "id": "adv_sales_02",
+    "dataset": "eval/datasets/adversarial_sales.csv",
+    "question": "How many transactions were made by male customers?",
+    "expected_answer": "161",
+    "kind": "numeric",
+    "tolerance": 0,
+    "trap": "categorical_normalization",
+    "notes": "gender column has Male/male/M/MALE — naive groupby undercounts"
+  },
+  {
+    "id": "adv_sales_03",
+    "dataset": "eval/datasets/adversarial_sales.csv",
+    "question": "What is the average transaction amount?",
+    "expected_answer": "1342.47",
+    "kind": "numeric",
+    "tolerance": 5,
+    "trap": "currency_format + outliers",
+    "notes": "outliers (2% at $50k-$100k) inflate the mean to ~1342; amount is a string with $ and ,"
+  },
+  {
+    "id": "adv_sales_04",
+    "dataset": "eval/datasets/adversarial_sales.csv",
+    "question": "What is the median transaction amount?",
+    "expected_answer": "384.21",
+    "kind": "numeric",
+    "tolerance": 5,
+    "trap": "currency_format + outliers",
+    "notes": "median is ~384 vs mean ~1342; tests whether agent can parse currency and compute median"
+  },
+  {
+    "id": "adv_sales_05",
+    "dataset": "eval/datasets/adversarial_sales.csv",
+    "question": "What percentage of transactions were completed?",
+    "expected_answer": "70.0",
+    "kind": "numeric",
+    "tolerance": 1.0,
+    "trap": "boolean_normalization",
+    "notes": "completed column has 8 different boolean representations; naive mean() gives wrong answer"
+  },
+  {
+    "id": "adv_emp_01",
+    "dataset": "eval/datasets/adversarial_employees.csv",
+    "question": "What is the average age of employees?",
+    "expected_answer": "41.58",
+    "kind": "numeric",
+    "tolerance": 1.0,
+    "trap": "free_text_contamination",
+    "notes": "age column has 'N/A', 'unknown', '?', '30 years' mixed with plain integers — must extract numeric"
+  },
+  {
+    "id": "adv_emp_02",
+    "dataset": "eval/datasets/adversarial_employees.csv",
+    "question": "What is the average employee salary?",
+    "expected_answer": "80488",
+    "kind": "numeric",
+    "tolerance": 500,
+    "trap": "currency_format",
+    "notes": "salary column is '$40,000' string — must strip $ and , before computing mean"
+  },
+  {
+    "id": "adv_emp_03",
+    "dataset": "eval/datasets/adversarial_employees.csv",
+    "question": "How many employees work in the Engineering department?",
+    "expected_answer": "43",
+    "kind": "numeric",
+    "tolerance": 0,
+    "trap": "categorical_normalization",
+    "notes": "department has 'Engineering', 'engineering', 'ENGINEERING', 'Eng' — naive equality misses variants"
+  },
+  {
+    "id": "adv_emp_04",
+    "dataset": "eval/datasets/adversarial_employees.csv",
+    "question": "What is the average performance score?",
+    "expected_answer": "5.40",
+    "kind": "numeric",
+    "tolerance": 0.2,
+    "trap": "nan_heavy",
+    "notes": "performance_score is 40% null — result depends on whether nulls are dropped or filled"
+  },
+  {
+    "id": "adv_trans_01",
+    "dataset": "eval/datasets/adversarial_transactions.csv",
+    "question": "What is the average profit margin across all transactions?",
+    "expected_answer": "0.3487",
+    "kind": "numeric",
+    "tolerance": 0.02,
+    "trap": "row_vs_aggregate",
+    "notes": "row-level margin = (profit/revenue per row).mean() = 0.3487; aggregate = 0.3536; answer may be decimal or %; tolerance covers decimal form; both interpretations defensible"
+  },
+  {
+    "id": "adv_trans_02",
+    "dataset": "eval/datasets/adversarial_transactions.csv",
+    "question": "What percentage of transactions resulted in a return?",
+    "expected_answer": "10.40",
+    "kind": "numeric",
+    "tolerance": 0.5,
+    "trap": "percentage_vs_count",
+    "notes": "is_return is boolean — must compute mean*100, not sum; 52 returns out of 500"
+  },
+  {
+    "id": "adv_trans_03",
+    "dataset": "eval/datasets/adversarial_transactions.csv",
+    "question": "Which product category generated the highest total revenue?",
+    "expected_answer": "Sports",
+    "kind": "string",
+    "tolerance": null,
+    "trap": null,
+    "notes": "control case — clean groupby, should pass; Sports: $60,309"
+  },
+  {
+    "id": "adv_trans_04",
+    "dataset": "eval/datasets/adversarial_transactions.csv",
+    "question": "How many transactions resulted in a return?",
+    "expected_answer": "52",
+    "kind": "numeric",
+    "tolerance": 0,
+    "trap": "percentage_vs_count",
+    "notes": "count trap counterpart to adv_trans_02 — must return count not percentage"
+  },
+  {
+    "id": "adv_events_01",
+    "dataset": "eval/datasets/adversarial_events.csv",
+    "question": "How many events took place in January 2023?",
+    "expected_answer": "5",
+    "kind": "numeric",
+    "tolerance": 0,
+    "trap": "mixed_datetime",
+    "notes": "event_date has 4 different formats in same column — must use pd.to_datetime with format='mixed' or errors='coerce'"
+  },
+  {
+    "id": "adv_events_02",
+    "dataset": "eval/datasets/adversarial_events.csv",
+    "question": "How many events fell on a weekend (Saturday or Sunday)?",
+    "expected_answer": "30",
+    "kind": "numeric",
+    "tolerance": 0,
+    "trap": "mixed_datetime",
+    "notes": "requires parsing mixed formats then extracting dayofweek >= 5"
+  },
+  {
+    "id": "adv_events_03",
+    "dataset": "eval/datasets/adversarial_events.csv",
+    "question": "What is the average event duration in hours?",
+    "expected_answer": "4.28",
+    "kind": "numeric",
+    "tolerance": 0.1,
+    "trap": null,
+    "notes": "control case — duration_hours is clean numeric; should pass easily"
+  },
+  {
+    "id": "adv_events_04",
+    "dataset": "eval/datasets/adversarial_events.csv",
+    "question": "Which city hosted the most events?",
+    "expected_answer": "Tokyo",
+    "kind": "string",
+    "tolerance": null,
+    "trap": null,
+    "notes": "control case — city is clean categorical; Tokyo: 23 events"
+  },
+  {
+    "id": "adv_survey_01",
+    "dataset": "eval/datasets/adversarial_survey.csv",
+    "question": "What percentage of respondents reported being satisfied?",
+    "expected_answer": "66.0",
+    "kind": "numeric",
+    "tolerance": 1.0,
+    "trap": "boolean_normalization",
+    "notes": "satisfied column has Yes/yes/Y/y/TRUE/1 vs No/no/N/n/FALSE/0 — naive mean() returns 1.0"
+  },
+  {
+    "id": "adv_survey_02",
+    "dataset": "eval/datasets/adversarial_survey.csv",
+    "question": "What is the average NPS score?",
+    "expected_answer": "5.52",
+    "kind": "numeric",
+    "tolerance": 0.3,
+    "trap": "nan_heavy",
+    "notes": "nps_score is 70% null — only 61/200 responses; correct answer uses the 61 non-null values"
+  },
+  {
+    "id": "adv_survey_03",
+    "dataset": "eval/datasets/adversarial_survey.csv",
+    "question": "What is the average rating score?",
+    "expected_answer": "3.09",
+    "kind": "numeric",
+    "tolerance": 0.2,
+    "trap": "nan_heavy",
+    "notes": "rating is 30% null — 136/200 valid; tests NaN-drop behavior on a less extreme case"
+  }
+]

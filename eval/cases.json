@@ -6,7 +6,8 @@
     "expected_answer": "2.9983",
     "kind": "numeric",
     "tolerance": 0.01,
-    "notes": "tips['tip'].mean() — seaborn tips dataset, 244 rows"
+    "trap": null,
+    "notes": "tips['tip'].mean()"
   },
   {
     "id": "tips_02",
@@ -15,7 +16,8 @@
     "expected_answer": "Sun",
     "kind": "string",
     "tolerance": null,
-    "notes": "tips.groupby('day')['tip'].mean().idxmax() — seaborn uses 3-letter abbrevs (Sun/Sat/Thur/Fri)"
+    "trap": null,
+    "notes": "groupby day, mean tip, idxmax -> Sun"
   },
   {
     "id": "tips_03",
@@ -24,16 +26,68 @@
     "expected_answer": "38.1",
     "kind": "numeric",
     "tolerance": 0.5,
-    "notes": "93 smokers / 244 total * 100 = 38.11%"
+    "trap": null,
+    "notes": "93/244 * 100"
   },
   {
-    "id": "tips_04_retry",
+    "id": "tips_04",
     "dataset": "eval/datasets/tips.csv",
     "question": "What is the correlation between total bill and tip amount?",
     "expected_answer": "0.6757",
     "kind": "numeric",
     "tolerance": 0.01,
-    "notes": "PLANTED ERROR case — attempt 1 uses wrong column name 'tip_amount', attempt 2 fixes it to 'tip'"
+    "trap": null,
+    "notes": "df[['total_bill','tip']].corr().iloc[0,1]"
+  },
+  {
+    "id": "tips_05",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "What is the average tip percentage (tip as a percentage of total bill)?",
+    "expected_answer": "16.08",
+    "kind": "numeric",
+    "tolerance": 0.5,
+    "trap": "computed_column",
+    "notes": "must compute tip/total_bill*100 per row then average — NOT avg_tip/avg_bill*100"
+  },
+  {
+    "id": "tips_06",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "Do smokers or non-smokers tip more on average?",
+    "expected_answer": "smoker",
+    "kind": "string",
+    "tolerance": null,
+    "trap": "ambiguous",
+    "notes": "smokers avg: 3.008, non-smokers: 2.991 — smokers tip slightly more; trap is assuming non-smokers behave better"
+  },
+  {
+    "id": "tips_07",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "Which meal time generates a higher average total bill: Lunch or Dinner?",
+    "expected_answer": "Dinner",
+    "kind": "string",
+    "tolerance": null,
+    "trap": null,
+    "notes": "Dinner ~20.80, Lunch ~17.17"
+  },
+  {
+    "id": "tips_08",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "How many transactions had a tip greater than $5?",
+    "expected_answer": "18",
+    "kind": "numeric",
+    "tolerance": 0,
+    "trap": null,
+    "notes": "df[df['tip'] > 5].shape[0] = 18"
+  },
+  {
+    "id": "tips_09",
+    "dataset": "eval/datasets/tips.csv",
+    "question": "What is the average total bill for parties of 4 or more people?",
+    "expected_answer": "29.31",
+    "kind": "numeric",
+    "tolerance": 0.5,
+    "trap": null,
+    "notes": "df[df['size']>=4]['total_bill'].mean() = 29.31"
   },
   {
     "id": "titanic_01",
@@ -42,6 +96,107 @@
     "expected_answer": "342",
     "kind": "numeric",
     "tolerance": 0,
-    "notes": "df['Survived'].sum() — Kaggle Titanic training set, 891 rows, 342 survived"
+    "trap": null,
+    "notes": "df['Survived'].sum()"
+  },
+  {
+    "id": "titanic_02",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "What was the average age of passengers who survived?",
+    "expected_answer": "28.3",
+    "kind": "numeric",
+    "tolerance": 0.5,
+    "trap": "nan_handling",
+    "notes": "Age has 177 nulls — must use dropna or fillna; df[df['Survived']==1]['Age'].mean() drops NaN by default -> ~28.3"
+  },
+  {
+    "id": "titanic_03",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "Which passenger class had the highest survival rate?",
+    "expected_answer": "1",
+    "kind": "string",
+    "tolerance": null,
+    "trap": "aggregation_level",
+    "notes": "groupby Pclass, mean Survived -> 1st class ~63%; trap is confusing count with rate"
+  },
+  {
+    "id": "titanic_04",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "What percentage of female passengers survived?",
+    "expected_answer": "74.2",
+    "kind": "numeric",
+    "tolerance": 1.0,
+    "trap": null,
+    "notes": "df[df['Sex']=='female']['Survived'].mean()*100"
+  },
+  {
+    "id": "titanic_05",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "What was the most common port of embarkation?",
+    "expected_answer": "S",
+    "kind": "string",
+    "tolerance": null,
+    "trap": "nan_handling",
+    "notes": "Embarked has 2 nulls; value_counts() drops NaN by default -> S (Southampton) with 644"
+  },
+  {
+    "id": "titanic_06",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "What was the average ticket fare paid by each passenger class?",
+    "expected_answer": "84",
+    "kind": "numeric",
+    "tolerance": 2.0,
+    "trap": null,
+    "notes": "groupby Pclass, mean Fare -> 1st:~84.15, 2nd:~20.66, 3rd:~13.68; check passes if first-class fare ~84 appears in answer"
+  },
+  {
+    "id": "titanic_07",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "How many passengers traveled completely alone (no siblings, spouse, parents, or children)?",
+    "expected_answer": "537",
+    "kind": "numeric",
+    "tolerance": 1,
+    "trap": null,
+    "notes": "df[(df['SibSp']==0) & (df['Parch']==0)].shape[0]"
+  },
+  {
+    "id": "titanic_08",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "What was the highest fare paid by any passenger?",
+    "expected_answer": "512.33",
+    "kind": "numeric",
+    "tolerance": 1.0,
+    "trap": null,
+    "notes": "df['Fare'].max()"
+  },
+  {
+    "id": "titanic_09",
+    "dataset": "eval/datasets/titanic.csv",
+    "question": "How many more women survived than men?",
+    "expected_answer": "124",
+    "kind": "numeric",
+    "tolerance": 1,
+    "trap": "aggregation_level",
+    "notes": "female survivors: 233, male survivors: 109, difference: 124; trap is confusing rate with count"
+  },
+  {
+    "id": "iris_01",
+    "dataset": "eval/datasets/iris.csv",
+    "question": "How many flowers of each species are in the dataset?",
+    "expected_answer": "50",
+    "kind": "numeric",
+    "tolerance": 0,
+    "trap": null,
+    "notes": "value_counts() -> setosa: 50, versicolor: 50, virginica: 50"
+  },
+  {
+    "id": "iris_02",
+    "dataset": "eval/datasets/iris.csv",
+    "question": "Which species has the largest average petal length?",
+    "expected_answer": "virginica",
+    "kind": "string",
+    "tolerance": null,
+    "trap": null,
+    "notes": "groupby species, mean petal_length -> virginica ~5.55"
   }
 ]
